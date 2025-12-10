@@ -5,13 +5,21 @@
 #include "test_harness.hpp"
 #include "benchmark_harness.hpp"
 #include "tuning_harness.hpp"
+#include "kernel_interface.hpp"
 
 // Kernel function declarations
 void singlethread_reference(int M, int N, int K, float* A, float* B, float* C);
+void singlethread_reference_setup();
+void singlethread_reference_teardown();
+
+void naive_single(int M, int N, int K, float* A, float* B, float* C);
+void naive_single_setup();
+void naive_single_teardown();
 
 // Map of available kernels
-std::map<std::string, void(*)(int, int, int, float*, float*, float*)> kernels = {
-    {"reference", singlethread_reference}
+std::map<std::string, KernelInterface> kernels = {
+    {"reference", KernelInterface(singlethread_reference, singlethread_reference_setup, singlethread_reference_teardown)},
+    {"naive", KernelInterface(naive_single, naive_single_setup, naive_single_teardown)}
 };
 
 void print_usage(const char* program_name) {

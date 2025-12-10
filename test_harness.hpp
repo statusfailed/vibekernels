@@ -3,6 +3,7 @@
 #include <random>
 #include <cmath>
 #include <iostream>
+#include "kernel_interface.hpp"
 
 class TestHarness {
 public:
@@ -18,6 +19,23 @@ public:
         }
     }
     
+    static bool test_kernel(const KernelInterface& kernel_interface,
+                           int M = 32, int N = 32, int K = 32, float tolerance = 1e-5f) {
+        // Call setup if provided
+        if (kernel_interface.setup) {
+            kernel_interface.setup();
+        }
+        
+        bool result = test_kernel(kernel_interface.kernel, M, N, K, tolerance);
+        
+        // Call teardown if provided
+        if (kernel_interface.teardown) {
+            kernel_interface.teardown();
+        }
+        
+        return result;
+    }
+
     static bool test_kernel(void (*kernel)(int, int, int, float*, float*, float*), 
                            int M = 32, int N = 32, int K = 32, float tolerance = 1e-5f) {
         std::vector<float> A(M * K);
@@ -47,6 +65,23 @@ public:
         return true;
     }
     
+    static bool comprehensive_test(const KernelInterface& kernel_interface) {
+        std::vector<std::tuple<int, int, int>> test_cases = {
+            {1, 1, 1}, {4, 4, 4}, {16, 16, 16}, {32, 32, 32}, 
+            {64, 32, 16}, {100, 50, 75}, {128, 128, 128}
+        };
+        
+        for (const auto& [M, N, K] : test_cases) {
+            if (!test_kernel(kernel_interface, M, N, K)) {
+                std::cout << "Test failed for " << M << "x" << N << "x" << K << std::endl;
+                return false;
+            }
+        }
+        
+        std::cout << "All comprehensive tests passed!" << std::endl;
+        return true;
+    }
+
     static bool comprehensive_test(void (*kernel)(int, int, int, float*, float*, float*)) {
         std::vector<std::tuple<int, int, int>> test_cases = {
             {1, 1, 1}, {4, 4, 4}, {16, 16, 16}, {32, 32, 32}, 

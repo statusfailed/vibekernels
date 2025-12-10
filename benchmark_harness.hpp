@@ -6,6 +6,7 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include "kernel_interface.hpp"
 
 struct BenchmarkResult {
     double mean_gflops;
@@ -30,6 +31,24 @@ struct BenchmarkResult {
 
 class BenchmarkHarness {
 public:
+    static BenchmarkResult benchmark_kernel(const KernelInterface& kernel_interface,
+                                           int M, int N, int K, int iterations = 100) {
+        // Call setup if provided
+        if (kernel_interface.setup) {
+            std::cout << "setting up ... " << std::endl;
+            kernel_interface.setup();
+        }
+        
+        auto result = benchmark_kernel(kernel_interface.kernel, M, N, K, iterations);
+        
+        // Call teardown if provided
+        if (kernel_interface.teardown) {
+            kernel_interface.teardown();
+        }
+        
+        return result;
+    }
+
     static BenchmarkResult benchmark_kernel(void (*kernel)(int, int, int, float*, float*, float*),
                                            int M, int N, int K, int iterations = 100) {
         std::vector<float> A(M * K);
@@ -88,6 +107,26 @@ public:
         return analyze_measurements(all_measurements);
     }
     
+    static double compare_kernels(const KernelInterface& kernel1, const KernelInterface& kernel2,
+                                const std::string& name1, const std::string& name2,
+                                int M = 256, int N = 256, int K = 256, int iterations = 100) {
+        auto result1 = benchmark_kernel(kernel1, M, N, K, iterations);
+        auto result2 = benchmark_kernel(kernel2, M, N, K, iterations);
+        
+        result1.print(name1);
+        result2.print(name2);
+        
+        double speedup = result1.mean_gflops / result2.mean_gflops;
+        double percentage = (result1.mean_gflops / result2.mean_gflops) * 100.0;
+        
+        std::cout << "\nComparison:" << std::endl;
+        std::cout << name1 << " vs " << name2 << ": " 
+                 << std::fixed << std::setprecision(2) 
+                 << speedup << "x speedup (" << percentage << "% of " << name2 << " performance)" << std::endl;
+        
+        return percentage;
+    }
+
     static double compare_kernels(void (*kernel1)(int, int, int, float*, float*, float*),
                                 void (*kernel2)(int, int, int, float*, float*, float*),
                                 const std::string& name1, const std::string& name2,

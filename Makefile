@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -O3 -march=native -std=c++17 -Wall -Wextra
-LDFLAGS = -lopenblas
+LDFLAGS = -lopenblas -lgomp
 
 SRCDIR = kernels
 SOURCES = main.cpp $(wildcard $(SRCDIR)/*.cpp)
