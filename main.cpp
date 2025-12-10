@@ -16,10 +16,20 @@ void naive_single(int M, int N, int K, float* A, float* B, float* C);
 void naive_single_setup();
 void naive_single_teardown();
 
+void singlethread_blocked(int M, int N, int K, float* A, float* B, float* C);
+void singlethread_blocked_setup();
+void singlethread_blocked_teardown();
+
+void singlethread_blocked_avx2(int M, int N, int K, float* A, float* B, float* C);
+void singlethread_blocked_avx2_setup();
+void singlethread_blocked_avx2_teardown();
+
 // Map of available kernels
 std::map<std::string, KernelInterface> kernels = {
     {"reference", KernelInterface(singlethread_reference, singlethread_reference_setup, singlethread_reference_teardown)},
-    {"naive", KernelInterface(naive_single, naive_single_setup, naive_single_teardown)}
+    {"naive", KernelInterface(naive_single, naive_single_setup, naive_single_teardown)},
+    {"blocked", KernelInterface(singlethread_blocked, singlethread_blocked_setup, singlethread_blocked_teardown)},
+    {"blocked_avx2", KernelInterface(singlethread_blocked_avx2, singlethread_blocked_avx2_setup, singlethread_blocked_avx2_teardown)}
 };
 
 void print_usage(const char* program_name) {

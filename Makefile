@@ -1,5 +1,5 @@
 CXX = g++
-CXXFLAGS = -O3 -march=native -std=c++17 -Wall -Wextra
+CXXFLAGS = -O3 -march=native -mavx2 -mfma -std=c++17 -Wall -Wextra
 LDFLAGS = -lopenblas -lgomp
 
 SRCDIR = kernels
