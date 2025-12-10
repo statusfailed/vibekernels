@@ -23,6 +23,8 @@ Follow this loop:
 - Run the kernel
 - If performance < 80% of reference, loop.
 
+In each iteration of the loop, try to only add *one* new performance technique.
+This will help us gauge what techniques are actually speeding us up.
 
 Notes:
 
