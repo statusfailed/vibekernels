@@ -83,7 +83,7 @@ int main(int argc, char* argv[]) {
         int M = argc > 3 ? std::stoi(argv[3]) : 256;
         int N = argc > 4 ? std::stoi(argv[4]) : 256;
         int K = argc > 5 ? std::stoi(argv[5]) : 256;
-        int iterations = argc > 6 ? std::stoi(argv[6]) : 100;
+        int iterations = argc > 6 ? std::stoi(argv[6]) : BenchmarkConfig::DEFAULT_ITERATIONS;
 
         auto result = BenchmarkHarness::benchmark_kernel(kernels[kernel_name], M, N, K, iterations);
         result.print(kernel_name);
@@ -137,7 +137,7 @@ int main(int argc, char* argv[]) {
         int M = argc > 4 ? std::stoi(argv[4]) : 256;
         int N = argc > 5 ? std::stoi(argv[5]) : 256;
         int K = argc > 6 ? std::stoi(argv[6]) : 256;
-        int iterations = argc > 7 ? std::stoi(argv[7]) : 100;
+        int iterations = argc > 7 ? std::stoi(argv[7]) : BenchmarkConfig::DEFAULT_ITERATIONS;
 
         BenchmarkHarness::compare_kernels(kernels[kernel1_name], kernels[kernel2_name],
                                         kernel1_name, kernel2_name,

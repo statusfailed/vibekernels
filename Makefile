@@ -5,6 +5,7 @@ LDFLAGS = -lopenblas -lgomp
 SRCDIR = kernels
 SOURCES = main.cpp $(wildcard $(SRCDIR)/*.cpp)
 OBJECTS = $(SOURCES:.cpp=.o)
+HEADERS = kernel_interface.hpp test_harness.hpp benchmark_harness.hpp tuning_harness.hpp
 TARGET = run
 
 .PHONY: all clean
@@ -14,8 +15,12 @@ all: $(TARGET)
 $(TARGET): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS)
 
-%.o: %.cpp
+# Object files depend on their source and all headers
+%.o: %.cpp $(HEADERS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Main specifically depends on all headers since it includes them
+main.o: main.cpp $(HEADERS)
 
 clean:
 	rm -f $(OBJECTS) $(TARGET)

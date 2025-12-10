@@ -8,6 +8,14 @@
 #include <cmath>
 #include "kernel_interface.hpp"
 
+// Benchmark configuration constants
+namespace BenchmarkConfig {
+    constexpr int DEFAULT_ITERATIONS = 1000;
+    constexpr int DEFAULT_WARMUP_RUNS = 10;
+    constexpr int DEFAULT_MATRIX_SIZE = 256;
+    constexpr int DEFAULT_MULTI_SIZE_ITERATIONS = 50;
+}
+
 struct BenchmarkResult {
     double mean_gflops;
     double min_gflops;
@@ -32,7 +40,7 @@ struct BenchmarkResult {
 class BenchmarkHarness {
 public:
     static BenchmarkResult benchmark_kernel(const KernelInterface& kernel_interface,
-                                           int M, int N, int K, int iterations = 100) {
+                                           int M, int N, int K, int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
         // Call setup if provided
         if (kernel_interface.setup) {
             std::cout << "setting up ... " << std::endl;
@@ -50,7 +58,7 @@ public:
     }
 
     static BenchmarkResult benchmark_kernel(void (*kernel)(int, int, int, float*, float*, float*),
-                                           int M, int N, int K, int iterations = 100) {
+                                           int M, int N, int K, int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
         std::vector<float> A(M * K);
         std::vector<float> B(K * N);
         std::vector<float> C(M * N);
@@ -63,7 +71,7 @@ public:
         measurements.reserve(iterations);
         
         // Warm-up runs
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < BenchmarkConfig::DEFAULT_WARMUP_RUNS; i++) {
             std::fill(C.begin(), C.end(), 0.0f);
             kernel(M, N, K, A.data(), B.data(), C.data());
         }
@@ -89,7 +97,7 @@ public:
     
     static BenchmarkResult benchmark_multiple_sizes(void (*kernel)(int, int, int, float*, float*, float*),
                                                    const std::vector<std::tuple<int, int, int>>& sizes,
-                                                   int iterations_per_size = 50) {
+                                                   int iterations_per_size = BenchmarkConfig::DEFAULT_MULTI_SIZE_ITERATIONS) {
         std::vector<double> all_measurements;
         
         std::cout << "Benchmarking across multiple matrix sizes..." << std::endl;
@@ -109,7 +117,10 @@ public:
     
     static double compare_kernels(const KernelInterface& kernel1, const KernelInterface& kernel2,
                                 const std::string& name1, const std::string& name2,
-                                int M = 256, int N = 256, int K = 256, int iterations = 100) {
+                                int M = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int N = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int K = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
         auto result1 = benchmark_kernel(kernel1, M, N, K, iterations);
         auto result2 = benchmark_kernel(kernel2, M, N, K, iterations);
         
@@ -130,7 +141,10 @@ public:
     static double compare_kernels(void (*kernel1)(int, int, int, float*, float*, float*),
                                 void (*kernel2)(int, int, int, float*, float*, float*),
                                 const std::string& name1, const std::string& name2,
-                                int M = 256, int N = 256, int K = 256, int iterations = 100) {
+                                int M = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int N = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int K = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
+                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
         auto result1 = benchmark_kernel(kernel1, M, N, K, iterations);
         auto result2 = benchmark_kernel(kernel2, M, N, K, iterations);
         
