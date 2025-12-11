@@ -11,7 +11,7 @@
 // Benchmark configuration constants
 namespace BenchmarkConfig {
     constexpr int DEFAULT_ITERATIONS = 1000;
-    constexpr int DEFAULT_WARMUP_RUNS = 10;
+    constexpr int DEFAULT_WARMUP_RUNS = 1000;
     constexpr int DEFAULT_MATRIX_SIZE = 256;
     constexpr int DEFAULT_MULTI_SIZE_ITERATIONS = 50;
 }
