@@ -95,7 +95,7 @@ int main(int argc, char* argv[]) {
 
     if (command == "bench") {
         if (argc < 3) {
-            std::cout << "Usage: " << argv[0] << " bench <kernel_name> [M] [N] [K] [iterations]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " bench <kernel_name> [M] [N] [K] [iterations] [warmup_runs]" << std::endl;
             return 1;
         }
 
@@ -109,8 +109,9 @@ int main(int argc, char* argv[]) {
         int N = argc > 4 ? std::stoi(argv[4]) : 256;
         int K = argc > 5 ? std::stoi(argv[5]) : 256;
         int iterations = argc > 6 ? std::stoi(argv[6]) : BenchmarkConfig::DEFAULT_ITERATIONS;
+        int warmup_runs = argc > 7 ? std::stoi(argv[7]) : BenchmarkConfig::DEFAULT_WARMUP_RUNS;
 
-        auto result = BenchmarkHarness::benchmark_kernel(kernels[kernel_name], M, N, K, iterations);
+        auto result = BenchmarkHarness::benchmark_kernel(kernels[kernel_name], M, N, K, iterations, warmup_runs);
         result.print(kernel_name);
 
         return 0;

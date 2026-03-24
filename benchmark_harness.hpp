@@ -23,6 +23,12 @@ struct BenchmarkResult {
     double std_gflops;
     double median_gflops;
     std::vector<double> all_measurements;
+    double mean_time_ms;
+    double min_time_ms;
+    double max_time_ms;
+    double std_time_ms;
+    double median_time_ms;
+    std::vector<double> all_times_ms;
     
     void print(const std::string& kernel_name) const {
         std::cout << std::fixed << std::setprecision(2);
@@ -32,6 +38,9 @@ struct BenchmarkResult {
         std::cout << "Max:    " << std::setw(8) << max_gflops << " GFLOPS" << std::endl;
         std::cout << "Median: " << std::setw(8) << median_gflops << " GFLOPS" << std::endl;
         std::cout << "StdDev: " << std::setw(8) << std_gflops << " GFLOPS" << std::endl;
+        std::cout << "Avg Time: " << std::setw(8) << mean_time_ms << " ms" << std::endl;
+        std::cout << "Min Time: " << std::setw(8) << min_time_ms << " ms" << std::endl;
+        std::cout << "Max Time: " << std::setw(8) << max_time_ms << " ms" << std::endl;
         std::cout << "Samples: " << all_measurements.size() << std::endl;
         std::cout << "============================================" << std::endl;
     }
@@ -40,14 +49,19 @@ struct BenchmarkResult {
 class BenchmarkHarness {
 public:
     static BenchmarkResult benchmark_kernel(const KernelInterface& kernel_interface,
-                                           int M, int N, int K, int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
+                                           int M, int N, int K,
+                                           int iterations = BenchmarkConfig::DEFAULT_ITERATIONS,
+                                           int warmup_runs = BenchmarkConfig::DEFAULT_WARMUP_RUNS) {
         // Call setup if provided
         if (kernel_interface.setup) {
             std::cout << "setting up ... " << std::endl;
             kernel_interface.setup();
         }
+
+        std::cout << "running with iterations=" << iterations
+                  << ", warmup_runs=" << warmup_runs << std::endl;
         
-        auto result = benchmark_kernel(kernel_interface.kernel, M, N, K, iterations);
+        auto result = benchmark_kernel(kernel_interface.kernel, M, N, K, iterations, warmup_runs);
         
         // Call teardown if provided
         if (kernel_interface.teardown) {
@@ -58,7 +72,9 @@ public:
     }
 
     static BenchmarkResult benchmark_kernel(void (*kernel)(int, int, int, float*, float*, float*),
-                                           int M, int N, int K, int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
+                                           int M, int N, int K,
+                                           int iterations = BenchmarkConfig::DEFAULT_ITERATIONS,
+                                           int warmup_runs = BenchmarkConfig::DEFAULT_WARMUP_RUNS) {
         std::vector<float> A(M * K);
         std::vector<float> B(K * N);
         std::vector<float> C(M * N);
@@ -69,9 +85,11 @@ public:
         
         std::vector<double> measurements;
         measurements.reserve(iterations);
+        std::vector<double> times_ms;
+        times_ms.reserve(iterations);
         
         // Warm-up runs
-        for (int i = 0; i < BenchmarkConfig::DEFAULT_WARMUP_RUNS; i++) {
+        for (int i = 0; i < warmup_runs; i++) {
             std::fill(C.begin(), C.end(), 0.0f);
             kernel(M, N, K, A.data(), B.data(), C.data());
         }
@@ -90,15 +108,17 @@ public:
             double gflops = operations / seconds * 1e-9;
             
             measurements.push_back(gflops);
+            times_ms.push_back(seconds * 1e3);
         }
         
-        return analyze_measurements(measurements);
+        return analyze_measurements(measurements, times_ms);
     }
     
     static BenchmarkResult benchmark_multiple_sizes(void (*kernel)(int, int, int, float*, float*, float*),
                                                    const std::vector<std::tuple<int, int, int>>& sizes,
                                                    int iterations_per_size = BenchmarkConfig::DEFAULT_MULTI_SIZE_ITERATIONS) {
         std::vector<double> all_measurements;
+        std::vector<double> all_times_ms;
         
         std::cout << "Benchmarking across multiple matrix sizes..." << std::endl;
         for (const auto& [M, N, K] : sizes) {
@@ -106,13 +126,16 @@ public:
             all_measurements.insert(all_measurements.end(), 
                                   result.all_measurements.begin(), 
                                   result.all_measurements.end());
+            all_times_ms.insert(all_times_ms.end(),
+                                result.all_times_ms.begin(),
+                                result.all_times_ms.end());
             
             std::cout << M << "x" << N << "x" << K << ": " 
                      << std::fixed << std::setprecision(2) 
                      << result.mean_gflops << " ± " << result.std_gflops << " GFLOPS" << std::endl;
         }
         
-        return analyze_measurements(all_measurements);
+        return analyze_measurements(all_measurements, all_times_ms);
     }
     
     static double compare_kernels(const KernelInterface& kernel1, const KernelInterface& kernel2,
@@ -163,9 +186,11 @@ public:
     }
 
 private:
-    static BenchmarkResult analyze_measurements(const std::vector<double>& measurements) {
+    static BenchmarkResult analyze_measurements(const std::vector<double>& measurements,
+                                                const std::vector<double>& times_ms) {
         BenchmarkResult result;
         result.all_measurements = measurements;
+        result.all_times_ms = times_ms;
         
         // Calculate statistics
         result.mean_gflops = std::accumulate(measurements.begin(), measurements.end(), 0.0) / measurements.size();
@@ -187,6 +212,24 @@ private:
         }
         variance /= measurements.size();
         result.std_gflops = std::sqrt(variance);
+
+        result.mean_time_ms = std::accumulate(times_ms.begin(), times_ms.end(), 0.0) / times_ms.size();
+        result.min_time_ms = *std::min_element(times_ms.begin(), times_ms.end());
+        result.max_time_ms = *std::max_element(times_ms.begin(), times_ms.end());
+
+        std::vector<double> sorted_times_ms = times_ms;
+        std::sort(sorted_times_ms.begin(), sorted_times_ms.end());
+        size_t t = sorted_times_ms.size();
+        result.median_time_ms = (t % 2 == 0) ?
+            (sorted_times_ms[t/2-1] + sorted_times_ms[t/2]) / 2.0 :
+            sorted_times_ms[t/2];
+
+        double time_variance = 0.0;
+        for (double time_ms : times_ms) {
+            time_variance += (time_ms - result.mean_time_ms) * (time_ms - result.mean_time_ms);
+        }
+        time_variance /= times_ms.size();
+        result.std_time_ms = std::sqrt(time_variance);
         
         return result;
     }
