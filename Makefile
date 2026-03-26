@@ -1,6 +1,6 @@
 CXX = g++
-CXXFLAGS = -O3 -march=native -mavx2 -mavx512f -mavx512dq -mfma -std=c++17 -Wall -Wextra
-LDFLAGS = -lopenblas -lgomp
+CXXFLAGS = -O3 -march=native -mavx2 -mavx512f -mavx512dq -mfma -std=c++17 -Wall -Wextra -fopenmp
+LDFLAGS = -lopenblas -fopenmp
 
 SRCDIR = kernels
 SOURCES = main.cpp $(wildcard $(SRCDIR)/*.cpp)

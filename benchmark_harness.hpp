@@ -143,9 +143,10 @@ public:
                                 int M = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
                                 int N = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
                                 int K = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
-                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
-        auto result1 = benchmark_kernel(kernel1, M, N, K, iterations);
-        auto result2 = benchmark_kernel(kernel2, M, N, K, iterations);
+                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS,
+                                int warmup_runs = BenchmarkConfig::DEFAULT_WARMUP_RUNS) {
+        auto result1 = benchmark_kernel(kernel1, M, N, K, iterations, warmup_runs);
+        auto result2 = benchmark_kernel(kernel2, M, N, K, iterations, warmup_runs);
         
         result1.print(name1);
         result2.print(name2);
@@ -167,9 +168,10 @@ public:
                                 int M = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
                                 int N = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
                                 int K = BenchmarkConfig::DEFAULT_MATRIX_SIZE, 
-                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS) {
-        auto result1 = benchmark_kernel(kernel1, M, N, K, iterations);
-        auto result2 = benchmark_kernel(kernel2, M, N, K, iterations);
+                                int iterations = BenchmarkConfig::DEFAULT_ITERATIONS,
+                                int warmup_runs = BenchmarkConfig::DEFAULT_WARMUP_RUNS) {
+        auto result1 = benchmark_kernel(kernel1, M, N, K, iterations, warmup_runs);
+        auto result2 = benchmark_kernel(kernel2, M, N, K, iterations, warmup_runs);
         
         result1.print(name1);
         result2.print(name2);

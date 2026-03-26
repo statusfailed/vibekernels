@@ -12,6 +12,10 @@ void singlethread_reference(int M, int N, int K, float* A, float* B, float* C);
 void singlethread_reference_setup();
 void singlethread_reference_teardown();
 
+void multithread_reference(int M, int N, int K, float* A, float* B, float* C);
+void multithread_reference_setup();
+void multithread_reference_teardown();
+
 void naive_single(int M, int N, int K, float* A, float* B, float* C);
 void naive_single_setup();
 void naive_single_teardown();
@@ -36,15 +40,21 @@ void singlethread_blocked_avx512_microkernel4x16_prefetch(int M, int N, int K, f
 void singlethread_blocked_avx512_microkernel4x16_prefetch_setup();
 void singlethread_blocked_avx512_microkernel4x16_prefetch_teardown();
 
+void omp_blocked_avx512_microkernel4x16_prefetch(int M, int N, int K, float* A, float* B, float* C);
+void omp_blocked_avx512_microkernel4x16_prefetch_setup();
+void omp_blocked_avx512_microkernel4x16_prefetch_teardown();
+
 // Map of available kernels
 std::map<std::string, KernelInterface> kernels = {
     {"reference", KernelInterface(singlethread_reference, singlethread_reference_setup, singlethread_reference_teardown)},
+    {"multithread_reference", KernelInterface(multithread_reference, multithread_reference_setup, multithread_reference_teardown)},
     {"naive", KernelInterface(naive_single, naive_single_setup, naive_single_teardown)},
     {"blocked", KernelInterface(singlethread_blocked, singlethread_blocked_setup, singlethread_blocked_teardown)},
     {"blocked_avx2", KernelInterface(singlethread_blocked_avx2, singlethread_blocked_avx2_setup, singlethread_blocked_avx2_teardown)},
     {"blocked_avx2_microkernel4x4", KernelInterface(singlethread_blocked_avx2_microkernel4x4, singlethread_blocked_avx2_microkernel4x4_setup, singlethread_blocked_avx2_microkernel4x4_teardown)},
     {"blocked_avx512_microkernel4x16", KernelInterface(singlethread_blocked_avx512_microkernel4x16, singlethread_blocked_avx512_microkernel4x16_setup, singlethread_blocked_avx512_microkernel4x16_teardown)},
-    {"blocked_avx512_microkernel4x16_prefetch", KernelInterface(singlethread_blocked_avx512_microkernel4x16_prefetch, singlethread_blocked_avx512_microkernel4x16_prefetch_setup, singlethread_blocked_avx512_microkernel4x16_prefetch_teardown)}
+    {"blocked_avx512_microkernel4x16_prefetch", KernelInterface(singlethread_blocked_avx512_microkernel4x16_prefetch, singlethread_blocked_avx512_microkernel4x16_prefetch_setup, singlethread_blocked_avx512_microkernel4x16_prefetch_teardown)},
+    {"omp_blocked_avx512_microkernel4x16_prefetch", KernelInterface(omp_blocked_avx512_microkernel4x16_prefetch, omp_blocked_avx512_microkernel4x16_prefetch_setup, omp_blocked_avx512_microkernel4x16_prefetch_teardown)}
 };
 
 void print_usage(const char* program_name) {
@@ -144,7 +154,7 @@ int main(int argc, char* argv[]) {
 
     if (command == "compare") {
         if (argc < 4) {
-            std::cout << "Usage: " << argv[0] << " compare <kernel1> <kernel2> [M] [N] [K] [iterations]" << std::endl;
+            std::cout << "Usage: " << argv[0] << " compare <kernel1> <kernel2> [M] [N] [K] [iterations] [warmup_runs]" << std::endl;
             return 1;
         }
 
@@ -164,10 +174,11 @@ int main(int argc, char* argv[]) {
         int N = argc > 5 ? std::stoi(argv[5]) : 256;
         int K = argc > 6 ? std::stoi(argv[6]) : 256;
         int iterations = argc > 7 ? std::stoi(argv[7]) : BenchmarkConfig::DEFAULT_ITERATIONS;
+        int warmup_runs = argc > 8 ? std::stoi(argv[8]) : BenchmarkConfig::DEFAULT_WARMUP_RUNS;
 
         BenchmarkHarness::compare_kernels(kernels[kernel1_name], kernels[kernel2_name],
                                         kernel1_name, kernel2_name,
-                                        M, N, K, iterations);
+                                        M, N, K, iterations, warmup_runs);
         return 0;
     }
 
