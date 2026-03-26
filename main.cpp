@@ -20,6 +20,10 @@ void naive_single(int M, int N, int K, float* A, float* B, float* C);
 void naive_single_setup();
 void naive_single_teardown();
 
+void omp_iterated(int M, int N, int K, float* A, float* B, float* C);
+void omp_iterated_setup();
+void omp_iterated_teardown();
+
 void singlethread_blocked(int M, int N, int K, float* A, float* B, float* C);
 void singlethread_blocked_setup();
 void singlethread_blocked_teardown();
@@ -49,6 +53,7 @@ std::map<std::string, KernelInterface> kernels = {
     {"reference", KernelInterface(singlethread_reference, singlethread_reference_setup, singlethread_reference_teardown)},
     {"multithread_reference", KernelInterface(multithread_reference, multithread_reference_setup, multithread_reference_teardown)},
     {"naive", KernelInterface(naive_single, naive_single_setup, naive_single_teardown)},
+    {"omp_iterated", KernelInterface(omp_iterated, omp_iterated_setup, omp_iterated_teardown)},
     {"blocked", KernelInterface(singlethread_blocked, singlethread_blocked_setup, singlethread_blocked_teardown)},
     {"blocked_avx2", KernelInterface(singlethread_blocked_avx2, singlethread_blocked_avx2_setup, singlethread_blocked_avx2_teardown)},
     {"blocked_avx2_microkernel4x4", KernelInterface(singlethread_blocked_avx2_microkernel4x4, singlethread_blocked_avx2_microkernel4x4_setup, singlethread_blocked_avx2_microkernel4x4_teardown)},

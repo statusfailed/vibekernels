@@ -1,6 +1,9 @@
 #include <cblas.h>
+#include <omp.h>
 
-void multithread_reference_setup() {}
+void multithread_reference_setup() {
+    openblas_set_num_threads(omp_get_max_threads());
+}
 
 void multithread_reference_teardown() {}
 
